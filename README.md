@@ -154,24 +154,23 @@ print(f'Actual class for sample input: {iris.target_names[y_test[5].item()]}')
 
 ### Dataset Information
 
-![Output](<../Screenshot 2026-06-05 192623.png>)
+![Output](<Screenshot 2026-06-05 192623.png>)
 
-![Output](<../Screenshot 2026-06-05 192647.png>)
-
+![Output](<Screenshot 2026-06-05 192647.png>)
 
 ### OUTPUT
 
 ## Confusion Matrix
 
-![Output](<../Screenshot 2026-06-05 192822.png>)
+![Output](<Screenshot 2026-06-05 192822.png>)
 
 ## Classification Report
 
-![Output](<../Screenshot 2026-06-05 192749.png>)
+![Output](<Screenshot 2026-06-05 192749.png>)
 
 ### New Sample Data Prediction
 
-![Output](<../Screenshot 2026-06-05 192829.png>)
+![Output](<Screenshot 2026-06-05 192829.png>)
 
 ## RESULT
 
