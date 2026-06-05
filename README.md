@@ -153,19 +153,26 @@ print(f'Actual class for sample input: {iris.target_names[y_test[5].item()]}')
 ### Register Number: 212224043001
 
 ### Dataset Information
-Include screenshot of the dataset.
+
+![Output](<../Screenshot 2026-06-05 192623.png>)
+
+![Output](<../Screenshot 2026-06-05 192647.png>)
+
 
 ### OUTPUT
 
 ## Confusion Matrix
 
-Include confusion matrix here
+![Output](<../Screenshot 2026-06-05 192822.png>)
 
 ## Classification Report
-Include classification report here
+
+![Output](<../Screenshot 2026-06-05 192749.png>)
 
 ### New Sample Data Prediction
-Include your sample input and output here
+
+![Output](<../Screenshot 2026-06-05 192829.png>)
 
 ## RESULT
-Include your result here
+
+Thus, a neural network classification model was successfully developed and trained using PyTorch.
