@@ -10,23 +10,23 @@ The Iris dataset consists of 150 samples from three species of iris flowers (Iri
 Include the neural network model diagram.
 
 ## DESIGN STEPS
-### STEP 1: 
-Load dataset
+### STEP 1: Load the dataset
+Load the Iris dataset using a suitable library.
 
-### STEP 2: 
-Process the Dataset
+### STEP 2: Preprocess the data
+Preprocess the data by handling missing values and normalizing features.
 
-### STEP 3: 
-Split features and target
+### STEP 3: Split the dataset
+Split the dataset into training and testing sets.
 
-### STEP 4:
-Define Neural Network
+### STEP 4: Train the model
+Train a classification model using the training data.
 
-### STEP 5:
-Initialize the training loop and train the model
+### STEP 5:  Evaluate the model
+Evaluate the model on the test data and calculate accuracy.
 
-### STEP 6:
-Compute metrics as result
+### STEP 6: Display results
+Display the test accuracy, confusion matrix, and classification report.
 
 
 ## PROGRAM
@@ -38,95 +38,79 @@ import torch.nn.functional as F
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 from torch.utils.data import TensorDataset, DataLoader
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_iris
 
-# Load dataset
-data = pd.read_csv('/content/drive/MyDrive/Deep_Learning/Experiment_2/customers.csv')
-data.head(10)
+iris = load_iris()
+X = iris.data
+y = iris.target
 
-# Drop ID column as it's not useful for classification
-data = data.drop(columns=["ID"])
+df = pd.DataFrame(X, columns=iris.feature_names)
+df['target'] = y
 
-# Handle missing values
-data.fillna({"Work_Experience": 0, "Family_Size": data["Family_Size"].median()}, inplace=True)
+print("First 5 rows of dataset: \n", df.head())
+print("\nLast 5 rows of dataset:\n", df.tail())
 
-# Encode categorical variables
-categorical_columns = ["Gender", "Ever_Married", "Graduated", "Profession", "Spending_Score", "Var_1"]
-for col in categorical_columns:
-    data[col] = LabelEncoder().fit_transform(data[col])
-
-# Encode target variable
-label_encoder = LabelEncoder()
-data["Segmentation"] = label_encoder.fit_transform(data["Segmentation"])  # A, B, C, D -> 0, 1, 2, 3
-
-# Split features and target
-X = data.drop(columns=["Segmentation"])
-y = data["Segmentation"].values
-
-# Train-test split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Normalize features
 scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
-# Convert to tensors
 X_train = torch.tensor(X_train, dtype=torch.float32)
 X_test = torch.tensor(X_test, dtype=torch.float32)
 y_train = torch.tensor(y_train, dtype=torch.long)
 y_test = torch.tensor(y_test, dtype=torch.long)
 
-# Create DataLoader
 train_dataset = TensorDataset(X_train, y_train)
 test_dataset = TensorDataset(X_test, y_test)
-train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
-test_loader = DataLoader(test_dataset, batch_size=16)
 
-# Define Neural Network(Model1)
-class PeopleClassifier(nn.Module):
-    def __init__(self, input_size):
-        super(PeopleClassifier, self).__init__()
-        #Include your code here
-        self.fc1 = nn.Linear(input_size, 32)
-        self.fc2 = nn.Linear(32, 16)
-        self.fc3 = nn.Linear(16, 8)
-        self.fc4 = nn.Linear(8, 4)
+train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
+test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
+
+class IrisClassifier(nn.Module):
+    def __init__(self, input_size, h1, h2, output_size):
+        super(IrisClassifier, self).__init__()
+        self.fc1 = nn.Linear(input_size, h1)
+        self.fc2 = nn.Linear(h1, h2)
+        self.fc3 = nn.Linear(h2, output_size)
 
     def forward(self, x):
-      #Include your code here
-      x = F.relu(self.fc1(x))
-      x = F.relu(self.fc2(x))
-      x = F.relu(self.fc3(x))
-      x = self.fc4(x)
-      return x
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        return self.fc3(x)
 
-# Training Loop
 def train_model(model, train_loader, criterion, optimizer, epochs):
-  model.train()
-  for epoch in range(epochs):
-    for inputs, label in train_loader:
-      optimizer.zero_grad()
-      outputs = model(inputs)
-      loss = criterion(outputs, label)
-      loss.backward()
-      optimizer.step()
+    for epoch in range(epochs):
+        model.train()
+        for X_batch, y_batch in train_loader:
+            optimizer.zero_grad()
+            outputs = model(X_batch)
+            loss = criterion(outputs, y_batch)
+            loss.backward()
+            optimizer.step()
+        if (epoch + 1) % 10 == 0:
+            print(f'Epoch [{epoch + 1}/{epochs}], Loss: {loss.item():.4f}')
 
-    if (epoch + 1) % 10 == 0:
-        print(f'Epoch [{epoch+1}/{epochs}], Loss: {loss.item():.4f}')
+input_size = X_train.shape[1]
+output_size = len(iris.target_names)
+h1 = 10
+h2 = 11
 
-# Initialize model
-model = PeopleClassifier(input_size = X_train.shape[1])
+model = IrisClassifier(input_size=input_size, h1=h1, h2=h2, output_size=output_size)
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+optimizer = optim.Adam(model.parameters(), lr=0.01)
 
-train_model(model, train_loader, criterion, optimizer, epochs=100)
+epochs = 100
+train_model(model, train_loader, criterion, optimizer, epochs)
 
-# Evaluation
 model.eval()
 predictions, actuals = [], []
+
 with torch.no_grad():
     for X_batch, y_batch in test_loader:
         outputs = model(X_batch)
@@ -134,35 +118,33 @@ with torch.no_grad():
         predictions.extend(predicted.numpy())
         actuals.extend(y_batch.numpy())
 
-# Compute metrics
 accuracy = accuracy_score(actuals, predictions)
 conf_matrix = confusion_matrix(actuals, predictions)
-class_report = classification_report(actuals, predictions, target_names=[str(i) for i in label_encoder.classes_])
-print("Name: S Jagandra vinu siva")
-print("Register No: 212224043001\n")
-print(f'Test Accuracy: {accuracy:.2f}%')
-print("\nConfusion Matrix:\n", conf_matrix)
-print("\nClassification Report:\n", class_report)
+class_report = classification_report(actuals, predictions, target_names=iris.target_names)
 
-import seaborn as sns
-import matplotlib.pyplot as plt
-sns.heatmap(conf_matrix, annot=True, cmap='Blues', xticklabels=label_encoder.classes_, yticklabels=label_encoder.classes_,fmt='g')
+print("\nName: S Jagandra vinu siva")
+print("Register No: 212224043001")
+print(f'Test Accuracy: {accuracy:.2f}%\n')
+print("Classification Report:\n", class_report)
+print("\nConfusion Matrix:\n", conf_matrix)
+
+plt.figure(figsize=(6, 5))
+sns.heatmap(conf_matrix, annot=True, cmap='Blues', xticklabels=iris.target_names, yticklabels=iris.target_names, fmt='g')
 plt.xlabel("Predicted Labels")
 plt.ylabel("True Labels")
 plt.title("Confusion Matrix")
 plt.show()
 
-# Prediction for a sample input
-sample_input = X_test[12].clone().unsqueeze(0).detach().type(torch.float32)
+sample_input = X_test[5].unsqueeze(0)
 with torch.no_grad():
     output = model(sample_input)
-    # Select the prediction for the sample (first element)
     predicted_class_index = torch.argmax(output[0]).item()
-    predicted_class_label = label_encoder.inverse_transform([predicted_class_index])[0]
-print("Name: S Jagandra vinu siva")
-print("Register No: 212224043001\n")
+    predicted_class_label = iris.target_names[predicted_class_index]
+
+print("\nName: S Jagandra vinu siva")
+print("Register No: 212224043001")
 print(f'Predicted class for sample input: {predicted_class_label}')
-print(f'Actual class for sample input: {label_encoder.inverse_transform([y_test[12].item()])[0]}')
+print(f'Actual class for sample input: {iris.target_names[y_test[5].item()]}')
 
 ```
 
